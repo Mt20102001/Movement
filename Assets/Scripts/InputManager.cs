@@ -60,7 +60,7 @@ public class InputManager : MonoBehaviour
         AttackInput = actions.Player.Attack.IsPressed();
         // AimInput = actions.Player.Aim.IsPressed();
         JumpInput = actions.Player.Jump.IsPressed();
-        CrouchInput = actions.Player.Crouch.IsPressed();
+        CrouchInput = actions.Player.Crouch.WasPressedThisFrame();
         RunInput = actions.Player.Sprint.IsPressed();
 
         // ReloadInput = actions.Player.Reload.WasPressedThisFrame();

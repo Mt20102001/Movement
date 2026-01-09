@@ -11,6 +11,7 @@ namespace PlayerControllers
 
     public interface IMovement : IController
     {
+        public DataMovementPlayer Configs { get; }
         public bool IsInitialized { get; }
         public Vector3 CurrentDir { get; }
         public float CurrentSpeed { get; }

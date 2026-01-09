@@ -12,9 +12,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 9e50f2f63d9cb124f974656a242eb728, type: 3}
   m_Name: Config Player
   m_EditorClassIdentifier: Assembly-CSharp::PlayerControllers.DataPlayer
-  MinSpeed: 2
-  MaxSpeed: 6.5
-  RotationSpeed: 2.5
+  MoveCrouchSpeed: 1.5
+  WalkSpeed: 3
+  RunSpeed: 6.5
+  RotationSpeed: 8
   JumpForce: 7
   NormalHeight: 1.8
   CrouchHeight: 0.9
+  Duration: 5

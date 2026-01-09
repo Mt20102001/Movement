@@ -39,6 +39,10 @@ public class PlayerController : MonoBehaviour
 
         var input = InputManager.Instance;
 
+        if (input.CrouchInput)
+        {
+            playerMovement.Crouch();
+        }
         playerMovement.Move(input.MoveInput, input.RunInput);
 
         if (controls != null && controls.Length > 0)

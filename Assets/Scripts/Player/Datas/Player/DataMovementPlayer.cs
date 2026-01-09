@@ -5,11 +5,13 @@ namespace PlayerControllers
     [CreateAssetMenu(fileName = "Config Player", menuName = "Datas/Player/Config Player", order = 1)]
     public class DataMovementPlayer : ScriptableObject
     {
-        public float MinSpeed;
-        public float MaxSpeed;
+        public float MoveCrouchSpeed;
+        public float WalkSpeed;
+        public float RunSpeed;
         public float RotationSpeed;
         public float JumpForce;
         public float NormalHeight;
         public float CrouchHeight;
+        public float Duration;
     }
 }
