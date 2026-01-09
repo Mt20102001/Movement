@@ -29,14 +29,12 @@ public class PlayerGraphic : MonoBehaviour
         }
 
 
-        // float moveParam = animator.GetFloat("IsMoving");
-        // currentMoveParam = Mathf.Lerp(moveParam, controller.Movement.IsMoving ? 1 : 0, duration);
-        // animator.SetFloat("IsMoving", currentMoveParam);
+        if (controller.Movement.IsJumping)
+        {
+            animator.SetTrigger("Jump");
+        }
 
-
-        // float runParam = animator.GetFloat("IsRunning");
-        // currentRunParam = Mathf.Lerp(runParam, controller.Movement.IsRunning ? 1 : 0, duration);
-        // animator.SetFloat("IsRunning", currentRunParam);
+        animator.SetBool("OnAir", controller.Movement.IsOnAir);
 
         float crouchParam = animator.GetFloat("IsCrouching");
         currentCrouchParam = Mathf.Lerp(crouchParam, controller.Movement.IsCrouching ? 1f : 0f, duration);

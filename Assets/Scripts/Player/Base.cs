@@ -18,6 +18,7 @@ namespace PlayerControllers
         public bool IsRunning { get; }
         public bool IsMoving { get; }
         public bool IsOnAir { get; }
+        public bool IsLanding { get; }
         public bool IsCrouching { get; }
         public bool IsJumping { get; }
     }

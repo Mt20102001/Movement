@@ -13,5 +13,8 @@ namespace PlayerControllers
         public float NormalHeight;
         public float CrouchHeight;
         public float Duration;
+        public float StartJumpUpTimeSec;
+        public float LandingTimeSec;
+        public float Gravity;
     }
 }

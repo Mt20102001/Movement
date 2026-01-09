@@ -1,4 +1,3 @@
-using System;
 using UnityEngine;
 
 namespace PlayerControllers
@@ -12,6 +11,7 @@ namespace PlayerControllers
         public bool IsRunning { get; private set; }
         public bool IsMoving { get; private set; }
         public bool IsOnAir { get; private set; }
+        public bool IsLanding { get; private set; }
         public bool IsCrouching { get; private set; }
         public bool IsJumping { get; private set; }
         public DataMovementPlayer Configs => dataPlayer;
@@ -22,79 +22,149 @@ namespace PlayerControllers
 
         private CharacterController character;
 
+        private float currentDelayStartJump;
+        private float currentDelayLanding;
+        private float verticalVelocity;
+
+        private Vector3 cacheMoveDirection;
+        private bool wasGround;
+        private bool isGrounded;
+
         public void Initialize()
         {
             character = GetComponent<CharacterController>();
+            isGrounded = true;
+            wasGround = isGrounded;
             IsInitialized = true;
         }
-
 
         public void CustomUpdate(float tick)
         {
             if (!IsInitialized) return;
 
-            if (!IsCrouching)
-                CurrentSpeed = IsMoving ? Mathf.Lerp(CurrentSpeed, IsRunning ? dataPlayer.RunSpeed : dataPlayer.WalkSpeed, tick * dataPlayer.Duration) : Mathf.Lerp(CurrentSpeed, 0, tick * dataPlayer.Duration);
-            else
-                CurrentSpeed = IsMoving ? Mathf.Lerp(CurrentSpeed, dataPlayer.MoveCrouchSpeed, tick * dataPlayer.Duration) : Mathf.Lerp(CurrentSpeed, 0, tick * dataPlayer.Duration);
+            IsOnAir = !character.isGrounded;
+            isGrounded = !IsOnAir;
 
-
-            if (IsMoving)
+            if (isGrounded)
             {
-                character.Move(cacheMoveDirection.normalized * CurrentSpeed * tick);
+                if (verticalVelocity < 0f)
+                    verticalVelocity = -2f;
+            }
+            else
+            {
+                verticalVelocity += dataPlayer.Gravity * tick;
+            }
+
+            if (currentDelayStartJump > 0f)
+            {
+                currentDelayStartJump -= tick;
+                if (currentDelayStartJump <= 0f)
+                {
+                    verticalVelocity = dataPlayer.JumpForce;
+                    IsJumping = true;
+                }
+            }
+
+            if (currentDelayLanding > 0f)
+            {
+                currentDelayLanding -= tick;
+                if (currentDelayLanding <= 0f)
+                {
+                    currentDelayLanding = 0f;
+                    IsLanding = false;
+                }
+            }
+
+            if (IsLanding)
+            {
+                CurrentSpeed = Mathf.Lerp(CurrentSpeed, 0f, tick * dataPlayer.Duration);
+                character.Move(Vector3.up * verticalVelocity * tick);
+                IsOnAir = !character.isGrounded;
+                return;
+            }
+
+            if (!IsCrouching)
+                CurrentSpeed = IsMoving
+                    ? Mathf.Lerp(CurrentSpeed, IsRunning ? dataPlayer.RunSpeed : dataPlayer.WalkSpeed, tick * dataPlayer.Duration)
+                    : Mathf.Lerp(CurrentSpeed, 0, tick * dataPlayer.Duration);
+            else
+                CurrentSpeed = IsMoving
+                    ? Mathf.Lerp(CurrentSpeed, dataPlayer.MoveCrouchSpeed, tick * dataPlayer.Duration)
+                    : Mathf.Lerp(CurrentSpeed, 0, tick * dataPlayer.Duration);
+
+            Vector3 finalMove =
+                cacheMoveDirection.normalized * CurrentSpeed +
+                Vector3.up * verticalVelocity;
+
+            character.Move(finalMove * tick);
+
+            if (IsMoving && !IsLanding)
+            {
                 transform.rotation = Quaternion.Lerp(
-                   transform.rotation,
-                   Quaternion.LookRotation(cacheMoveDirection),
-                   tick * dataPlayer.RotationSpeed
-               );
+                    transform.rotation,
+                    Quaternion.LookRotation(cacheMoveDirection),
+                    tick * dataPlayer.RotationSpeed
+                );
+            }
+
+            if (wasGround != isGrounded)
+            {
+                if (wasGround && !isGrounded)
+                {
+                    IsJumping = false;
+                }
+                else if (!wasGround && isGrounded)
+                {
+                    IsLanding = true;
+                    currentDelayLanding = dataPlayer.LandingTimeSec;
+                }
+
+                wasGround = isGrounded;
             }
         }
 
-        Vector3 cacheMoveDirection;
         public void Move(Vector2 inputMove, bool inputRun)
         {
-            cacheMoveDirection = inputMove;
             CurrentDir = new Vector3(inputMove.x, 0f, inputMove.y).normalized;
-            IsMoving = CurrentDir.magnitude > 0.1f;
+            IsMoving = CurrentDir.sqrMagnitude > 0.01f;
             IsRunning = IsMoving && inputRun && !IsCrouching;
 
             if (IsMoving)
             {
-                float targetAngle = Mathf.Atan2(CurrentDir.x, CurrentDir.z) * Mathf.Rad2Deg + mainCamera.eulerAngles.y;
-                cacheMoveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-            }
-        }
+                float targetAngle =
+                    Mathf.Atan2(CurrentDir.x, CurrentDir.z) * Mathf.Rad2Deg
+                    + mainCamera.eulerAngles.y;
 
-
-        public void Crouch()
-        {
-            IsCrouching = !IsCrouching;
-            if (IsCrouching)
-            {
-                character.height = dataPlayer.CrouchHeight;
-                character.center = new Vector3(0f, dataPlayer.CrouchHeight / 2f, 0f);
+                cacheMoveDirection =
+                    Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
             }
             else
             {
-                character.height = dataPlayer.NormalHeight;
-                character.center = new Vector3(0f, dataPlayer.NormalHeight / 2f, 0f);
+                cacheMoveDirection = Vector3.zero;
             }
         }
 
+        public void Crouch()
+        {
+            if (IsJumping || IsOnAir || IsLanding) return;
+
+            IsCrouching = !IsCrouching;
+
+            character.height = IsCrouching ? dataPlayer.CrouchHeight : dataPlayer.NormalHeight;
+            character.center = new Vector3(0f, character.height / 2f, 0f);
+        }
 
         public void ForceCrouchState(bool isCrouching)
         {
             IsCrouching = isCrouching;
-            if (IsCrouching)
-            {
-                character.height = dataPlayer.CrouchHeight;
-                character.center = new Vector3(0f, dataPlayer.CrouchHeight / 2f, 0f);
-            }
-            else
-            {
-                character.height = dataPlayer.NormalHeight;
-                character.center = new Vector3(0f, dataPlayer.NormalHeight / 2f, 0f);
-            }
+            character.height = IsCrouching ? dataPlayer.CrouchHeight : dataPlayer.NormalHeight;
+            character.center = new Vector3(0f, character.height / 2f, 0f);
+        }
+
+        public void Jump()
+        {
+            if (!isGrounded || IsLanding) return;
+            currentDelayStartJump = dataPlayer.StartJumpUpTimeSec;
         }
     }
 }

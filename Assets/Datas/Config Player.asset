@@ -20,3 +20,6 @@ MonoBehaviour:
   NormalHeight: 1.8
   CrouchHeight: 0.9
   Duration: 5
+  StartJumpUpTimeSec: 0.217
+  LandingTimeSec: 0.106
+  Gravity: -12
